@@ -1,5 +1,5 @@
 /*
-File: CS112_A3_T1_S25_20231088_20231299_20231206.cpp
+File: CS112_A3_P2_S25_20231088_20231299_20231206.cpp
 
 Authors:
 Safia Mohamed Saied (S26)
@@ -12,9 +12,9 @@ mariaatef517@gmail.com
 yahianassar2005@gmail.com
 
  ID's
-20231088: Gray scale and dark & light filter.
-20231299: Invert filter.
-20231206: black & white filter and flip filter.
+20231088: Gray scale, Dark & light, Detecting edges, Merge and Purple filter.
+20231299: Invert, Blur, Frame, Rotate and  Infrared filter.
+20231206: black & white, flip, Resize, Crop and Sunlight filter.
 */
 
 
@@ -24,10 +24,53 @@ yahianassar2005@gmail.com
 #include <regex>
 #include <array>
 #include <limits>
+#include "vector"
 
 
 using namespace std;
 
+
+bool isValidInput(const string& input) {
+    regex rx("([a-zA-Z0-9_-]+)\\s*([a-zA-Z0-9_-]+)\\.(\\w+)$");
+    //smatch match;
+    return regex_match(input, rx); // Use regex_match with match object
+
+}
+
+
+string ValidName() {
+    string filename;
+    cout << "Pls enter image name:";
+    smatch matches;
+
+    while (true) {
+        cin >> filename;
+        // See if the input follow the regex format or not
+        if (!isValidInput(filename)) {
+            cout << "this is an invalid input format!" << endl;
+            continue;
+        }
+        regex_match(filename, matches, regex("([a-zA-Z0-9_-]+)\\s*([a-zA-Z0-9_-]+)\\.(\\w+)$"));
+
+
+        if (matches[3] != "jpg" && matches[3] != "png" && matches[3] != "bmp" && matches[3] != "tga") {
+            cout << "this is not a valid extension" << endl;
+            continue;
+        }
+        break;
+    }
+    return filename;
+}
+
+
+
+void Save(Image& image) {
+    cout << "Pls enter image name to store new image\n";
+    cout << "and specify extension .jpg, .bmp, .png, .tga: ";
+    string newFilename = ValidName();
+    image.saveImage(newFilename);
+    system(newFilename.c_str());
+}
 
 void Rotate(Image& image) {
     cout << "Choose rotation angle:\n1) 90 degrees\n2) 180 degrees\n3) 270 degrees\n";
@@ -37,26 +80,26 @@ void Rotate(Image& image) {
     int width = image.width;
     int channels = image.channels;
 
-    Image flippedImage;
+    Image RotatedImage;
 
     // Using if statements to determine rotation angle
     if (num == 1) { // 90 degrees clockwise
-        flippedImage = Image(height, width);
+        RotatedImage = Image(height, width);
         for (int i = 0; i < image.width; i++) {
             for (int j = 0; j < image.height; j++) {
                 for (int k = 0; k < 3; k++) {
-                    flippedImage(height - j - 1, i, k) = image(i, j, k);
+                    RotatedImage(height - j - 1, i, k) = image(i, j, k);
                 }
             }
         }
     }
 
     else if (num == 2) { // 180 degrees
-        flippedImage = Image(width, height);
+        RotatedImage = Image(width, height);
         for (int i = 0; i < width; ++i) {
             for (int j = 0; j < height; ++j) {
                 for (int k = 0; k < 3; ++k) {
-                    flippedImage(width - i - 1, height - j - 1, k) = image(i, j, k);
+                    RotatedImage(width - i - 1, height - j - 1, k) = image(i, j, k);
                 }
             }
         }
@@ -64,11 +107,11 @@ void Rotate(Image& image) {
     }
 
     else if (num == 3) { // 270 degrees clockwise
-        flippedImage = Image(height, width);
+        RotatedImage = Image(height, width);
         for (int i = 0; i < image.width; i++) {
             for (int j = 0; j < image.height; j++) {
                 for (int k = 0; k < 3; k++) {
-                    flippedImage(j, i, k) = image(i, j, k);
+                    RotatedImage(j, i, k) = image(i, j, k);
                 }
             }
         }
@@ -76,10 +119,10 @@ void Rotate(Image& image) {
 
     else {
         cout << "Invalid option!" << endl;
-        return ;
+        return;
     }
 
-    image = flippedImage;
+    image = RotatedImage;
 }
 
 
@@ -118,7 +161,7 @@ string getFrameColor() {
     cout << "Enter the frame color (red, green, blue, purple, white, black): ";
     cin >> frameColor;
     while (frameColor != "red" && frameColor != "green" && frameColor != "blue" &&
-           frameColor != "purple" && frameColor != "white" && frameColor != "black") {
+        frameColor != "purple" && frameColor != "white" && frameColor != "black") {
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
         cout << "Invalid color. Please enter a valid color: ";
@@ -130,25 +173,31 @@ string getFrameColor() {
 // Function to get RGB values for a color
 array<int, 3> getRGBValues(const string& color) {
     if (color == "red") {
-        return {255, 0, 0};
-    } else if (color == "green") {
-        return {0, 255, 0};
-    } else if (color == "blue") {
-        return {0, 0, 255};
-    } else if (color == "purple") {
-        return {160, 32, 240};
-    } else if (color == "white") {
-        return {255, 255, 255};
-    } else if (color == "black") {
-        return {0, 0, 0};
-    } else {
+        return { 255, 0, 0 };
+    }
+    else if (color == "green") {
+        return { 0, 255, 0 };
+    }
+    else if (color == "blue") {
+        return { 0, 0, 255 };
+    }
+    else if (color == "purple") {
+        return { 160, 32, 240 };
+    }
+    else if (color == "white") {
+        return { 255, 255, 255 };
+    }
+    else if (color == "black") {
+        return { 0, 0, 0 };
+    }
+    else {
         cerr << "Invalid color." << endl;
         exit(-1);
     }
 }
 
 // Function for fancy frame
-Image FancyFrame( Image& image, int thickness, const array<int, 3>& frameColor) {
+Image FancyFrame(Image& image, int thickness, const array<int, 3>& frameColor) {
     int width = image.width;
     int height = image.height;
 
@@ -198,7 +247,7 @@ Image FancyFrame( Image& image, int thickness, const array<int, 3>& frameColor) 
         }
     }
     // Define pink color RGB values
-    const array<int, 3> pinkColor = {255, 105, 180};
+    const array<int, 3> pinkColor = { 255, 105, 180 };
 
     // Draw top-left corner box  (pink)
     for (int x = -thickness; x < 0; ++x) {
@@ -257,7 +306,7 @@ Image FancyFrame( Image& image, int thickness, const array<int, 3>& frameColor) 
     return modifiedImage;
 }
 
-Image NormalFrame( Image& image, int thickness, const array<int, 3>& frameColor) {
+Image NormalFrame(Image& image, int thickness, const array<int, 3>& frameColor) {
     int width = image.width;
     int height = image.height;
 
@@ -346,12 +395,37 @@ void BlackWhite(Image& image) {
 
 
 void Flip(Image& image) {
+    cout << "do you want to flip\n1)horizontally\n2)vertically";
+    int flip;
+    cin >> flip;
+    // Create a temporary image to hold the flipped pixels
+    Image flippedImage(image.width, image.height);
+
+    for (int i = 0; i < image.width; ++i) {
+        for (int j = 0; j < image.height; ++j) {
+            if (flip == 1) {
+                for (int k = 0; k < 3; ++k) {
+                    flippedImage(i, j, k) = image(image.width - 1 - i, j, k);
+                }
+            }
+            else {
+                for (int k = 0; k < 3; ++k) {
+                    flippedImage(i, j, k) = image(i, image.height - 1 - j, k);
+                }
+            }
+        }
+    }
+    Save(flippedImage);
 
 }
 
 
 
-void Resize(Image& image, int newwidth, int newheight) {
+void Resize(Image& image) {
+    int newwidth, newheight;
+    cout << "Enter the dimention of the resized image:" << endl;
+    cin >> newwidth >> newheight;
+
     double n, m;
 
     m = static_cast<double>(image.width) / newwidth;
@@ -365,7 +439,8 @@ void Resize(Image& image, int newwidth, int newheight) {
             }
         }
     }
-    
+    Save(image2);
+
 }
 
 
@@ -474,6 +549,89 @@ void Edges(Image& image) {
 }
 
 
+// Function to merge two images
+void Merge(Image& image) {
+
+    string filename1 = ValidName();
+    Image image2(filename1);
+
+    cout << "Do you want to merge to bigger or smaller?\n1)Smaller\n2)Bigger\n";
+    char choice;
+    cin >> choice;
+
+    if (choice == '1') {
+        Image mergedImage(min(image.width, image2.width), min(image.height, image2.height));
+
+        for (int i = 1; i < mergedImage.width; ++i) {
+            for (int j = 1; j < mergedImage.height; ++j) {
+                for (int k = 0; k < 3; ++k) {
+                    mergedImage(i, j, k) = (image(i, j, k) + image2(i, j, k)) / 2;
+                }
+            }
+        }
+
+        Save(mergedImage);
+
+    }
+
+    else {
+
+        // If merging to a larger image, resize both images to the larger dimensions
+        int maxWidth = max(image.width, image2.width);
+        int maxHeight = max(image.height, image2.height);
+
+        double n, m;
+        Image Resized1(maxWidth, maxHeight);
+        Image Resized2(maxWidth, maxHeight);
+
+
+        if (image.width > image2.width && image.height > image2.height) {
+            m = static_cast<double>(image2.width) / maxWidth;
+            n = static_cast<double>(image2.height) / maxHeight;
+
+            for (int i = 0; i < Resized2.width; i++) {
+                for (int j = 0; j < Resized2.height; j++) {
+                    for (int k = 0; k < Resized2.channels; k++) {
+                        Resized2(i, j, k) = image2(round(i * m), round(j * n), k);
+                    }
+                }
+            }
+            Resized1 = image;
+
+        }
+        else {
+            m = static_cast<double>(image.width) / maxWidth;
+            n = static_cast<double>(image.height) / maxHeight;
+
+            for (int i = 0; i < Resized1.width; i++) {
+                for (int j = 0; j < Resized1.height; j++) {
+                    for (int k = 0; k < Resized1.channels; k++) {
+                        Resized1(i, j, k) = image(round(i * m), round(j * n), k);
+                    }
+                }
+            }
+            Resized2 = image2;
+
+        }
+
+        // Now that both images have the same dimensions, perform the merging operation
+        Image mergedImage(maxWidth, maxHeight);
+        for (int i = 0; i < maxWidth; ++i) {
+            for (int j = 0; j < maxHeight; ++j) {
+                for (int k = 0; k < 3; ++k) {
+                    mergedImage(i, j, k) = (Resized1(i, j, k) + Resized2(i, j, k)) / 2;
+                }
+            }
+        }
+
+        Save(mergedImage);
+
+    }
+
+}
+
+
+
 void Infrared(Image& image1) {
     int width = image1.width;
     int height = image1.height;
@@ -489,11 +647,6 @@ void Infrared(Image& image1) {
     swap(image1.imageData, infrared.imageData);
 }
 
-
-#include <iostream>
-#include "Image_Class.h"
-#include <vector>
-using namespace std;
 
 // Function to calculate prefix sum for a given color channel
 vector<vector<int>> calculatePrefixSum(const Image& image, int colorChannel) {
@@ -519,6 +672,7 @@ vector<vector<int>> calculatePrefixSum(const Image& image, int colorChannel) {
     return prefixSum;
 }
 
+
 // Function to blur the image using prefix sum
 Image blurImage(const Image& image, int blurRadius) {
     int width = image.width;
@@ -527,29 +681,29 @@ Image blurImage(const Image& image, int blurRadius) {
 
     // Blur each color channel separately
     for (int colorChannel = 0; colorChannel < 3; ++colorChannel) {
-    
+
         vector<vector<int>> prefixSum = calculatePrefixSum(image, colorChannel);
 
         // Calculate the blur for each pixel in the current color channel
         for (int i = 0; i < width; ++i) {
             for (int j = 0; j < height; ++j) {
-                // Calculate the bounds of the blur 
-                int x1 = max(0, i - blurRadius);
-                int x2 = min(width - 1, i + blurRadius);
-                int y1 = max(0, j - blurRadius);
-                int y2 = min(height - 1, j + blurRadius);
+                // Calculate the bounds of the blur
+                int left_bound = max(0, i - blurRadius);
+                int right_bound = min(width - 1, i + blurRadius);
+                int top_bound = max(0, j - blurRadius);
+                int bottom_bound = min(height - 1, j + blurRadius);
 
                 // Calculate the sum of pixel values within the blur bounds using prefix sum
-                int sum = prefixSum[x2][y2];
-                if (x1 > 0)
-                    sum -= prefixSum[x1 - 1][y2];
-                if (y1 > 0)
-                    sum -= prefixSum[x2][y1 - 1];
-                if (x1 > 0 && y1 > 0)
-                    sum += prefixSum[x1 - 1][y1 - 1];
+                int sum = prefixSum[right_bound][bottom_bound];
+                if (left_bound > 0)
+                    sum -= prefixSum[left_bound - 1][bottom_bound];
+                if (top_bound > 0)
+                    sum -= prefixSum[right_bound][top_bound - 1];
+                if (left_bound > 0 && top_bound > 0)
+                    sum += prefixSum[left_bound - 1][top_bound - 1];
 
                 // Calculate the average pixel within the blur bounds
-                int count = (x2 - x1 + 1) * (y2 - y1 + 1);
+                int count = (right_bound - left_bound + 1) * (bottom_bound - top_bound + 1);
                 int avg = sum / count;
 
                 // assign avg to new image as we use the avg of pixel to get blurred image
@@ -561,12 +715,6 @@ Image blurImage(const Image& image, int blurRadius) {
     return blurredImage;
 }
 
-
-#include <iostream>
-#include <algorithm>
-#include "Image_Class.h"
-
-using namespace std;
 
 // Function to increase sunlight in the image
 void sunlight(Image& image) {
@@ -582,154 +730,176 @@ void sunlight(Image& image) {
     }
 }
 
+void Crop(Image& image) {
 
+    int newwidth, newheight, startW, startH;
+    cout << "Enter the dimensions of the cropped image: " << endl;
+    cin >> newwidth >> newheight;
+    cout << "Enter the starting points: " << endl;
+    cin >> startW >> startH;
 
+    Image image2(newwidth, newheight);
 
-bool isValidInput(const string& input) {
-    regex rx("([a-zA-Z0-9_-]+)\\.(\\w+)$"); // Corrected regex pattern
-    //smatch match;
-    return regex_match(input, rx); // Use regex_match with match object
+    for (int i = 0; i < newwidth; i++) {
+        for (int j = 0; j < newheight; j++) {
+            for (int k = 0; k < 3; k++) {
+                // Adjust coordinates to account for starting points
+                int original_x = i + startW;
+                int original_y = j + startH;
 
-}
+                // Make sure the coordinates are within the original image bounds
+                original_x = std::max(0, std::min(original_x, image.width - 1));
+                original_y = std::max(0, std::min(original_y, image.height - 1));
 
-
-string ValidName() {
-    string filename;
-    cout << "Pls enter image name:";
-    smatch matches;
-
-    while (true) {
-        cin >> filename;
-        // See if the input follow the regex format or not
-        if (!isValidInput(filename)) {
-            cout << "this is an invalid input format!" << endl;
-            continue;
+                // Set pixel value in cropped image
+                image2.setPixel(i, j, k, image.getPixel(original_x, original_y, k));
+            }
         }
-        regex_match(filename, matches, regex("([a-zA-Z0-9_-]+)\\.(\\w+)$"));
-
-
-        if (matches[2] != "jpg" && matches[2] != "png" && matches[2] != "bmp" && matches[2] != "tga") {
-            cout << "this is not a valid extension" << endl;
-            continue;
-        }
-        break;
     }
-    return filename;
+    Save(image2);
 }
+
 
 int main() {
-    while(true) {
-        string filename = ValidName();
-        Image image(filename);
-        cout<< "1)Dark & light\n2)invert\n3)Grey scale\n4)Flip\n5)Black & white\n6)purple\n7)Detect edges\n8)Frame\n9)Infrared\n10)Rotate\n11)Resize\n12)Blurr\n13)Sunlight\n16)Exit\n";
-        string choice;
-        cin >> choice;
+    while (true) {
 
-        while (choice != "1" && choice != "2" && choice != "3" && choice != "4" && choice != "5" && choice != "6" &&
-               choice != "7" && choice != "8" && choice != "9" && choice != "10" && choice != "11"&& choice != "12" && choice != "13" && choice != "16" ) {
-            cout << "Enter a valid choice please:";
+        string again;
+        cout << "Do you want to edit an image or exit (Y/N)?: ";
+        cin >> again;
+        for (char& i : again)
+            i = toupper(i);
+
+        while (again != "Y" && again != "N") {
+            cout << "Invalid input. Please enter Y or N: ";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin >> again;
+            for (char& i : again)
+                i = toupper(i);
+        }
+
+        if (again == "Y") {
+
+            string filename = ValidName();
+            Image image(filename);
+            cout << "1)Dark & light\n2)Invert\n3)Grey scale\n4)Flip\n5)Black & white\n6)Purple\n7)Detect edges\n8)Frame"
+                "\n9)Infrared\n10)Rotate\n11)Resize\n12)Blurr\n13)Sunlight\n14)Merge\n15)Crop\n";
+            string choice;
             cin >> choice;
-        }
 
-        if (choice == "1")
-            DarkLight(image);
-
-        else if (choice == "2")
-            invert(image);
-
-        else if (choice == "3")
-            GreyScale(image);
-
-        else if (choice == "4")
-            Flip(image);
-
-        else if (choice == "5")
-            BlackWhite(image);
-
-        else if (choice == "6")
-            Purple(image);
-
-        else if (choice == "7")
-            Edges(image);
-
-        else if (choice == "8") {
-            int frameThickness = getFrameThickness();
-            string frameType = getFrameType();
-            string color = getFrameColor();
-            array<int, 3> frameColor = getRGBValues(color);
-            Image modifiedImage;
-            if (frameType == "normal") {
-                modifiedImage = NormalFrame(image, frameThickness, frameColor);
-                modifiedImage.saveImage("normal_frame.jpg");
-            } else if (frameType == "fancy") {
-                modifiedImage = FancyFrame(image, frameThickness, frameColor);
-                modifiedImage.saveImage("fancy_frame.jpg");
-            }
-            (image = modifiedImage);
-        }
-
-        else if (choice == "9")
-            Infrared(image);
-
-        else if (choice == "10")
-            Rotate(image);
-
-        else if(choice == "11"){
-            int newwidth, newheight;
-            cout << "Enter the dimention of the resized image:" << endl;
-            cin >> newwidth >> newheight;
-
-            Resize(image, newwidth, newheight);
-            
-
-        }
-        else if(choice == "12"){
-            //allow the user to enter the blur level
-            int blurLevel;
-            while (true) {
-            cout << "Enter the blur level (1 for light, 2 for medium, 3 for extreme): ";
-            cin >> blurLevel;
-
-            if (blurLevel == 1 || blurLevel == 2 || blurLevel == 3) {
-                break;
-            } else {
-                cout << "Invalid blur level, please enter either 1, 2, or 3: ";
-                cin.clear(); 
-                cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-            }
+            while (choice != "1" && choice != "2" && choice != "3" && choice != "4" && choice != "5" && choice != "6" &&
+                choice != "7" && choice != "8" && choice != "9" && choice != "10" && choice != "11" &&
+                choice != "12" && choice != "13" && choice != "14" && choice != "15") {
+                cout << "Enter a valid choice please:";
+                cin >> choice;
             }
 
-            int blurRadius;
-            if (blurLevel == 1) {
-            blurRadius = 8;
-            } else if (blurLevel == 2) {
-            blurRadius = 30;
-            } else if (blurLevel == 3) {
-            blurRadius = 57;
-            } else {
-            cerr << "Invalid blur level." << endl;
-            return 1;
+            if (choice == "1") {
+                DarkLight(image);
+                Save(image);
             }
-            
-            Image blurredImage = blurImage(image, blurRadius);
-            (image = blurredImage);
+            else if (choice == "2") {
+                invert(image);
+                Save(image);
+            }
+            else if (choice == "3") {
+                GreyScale(image);
+                Save(image);
+            }
+            else if (choice == "4") {
+                Flip(image);
+            }
+            else if (choice == "5") {
+                BlackWhite(image);
+                Save(image);
+            }
+            else if (choice == "6") {
+                Purple(image);
+                Save(image);
+            }
+            else if (choice == "7") {
+                Edges(image);
+                Save(image);
+            }
+            else if (choice == "8") {
+                int frameThickness = getFrameThickness();
+                string frameType = getFrameType();
+                string color = getFrameColor();
+                array<int, 3> frameColor = getRGBValues(color);
+                Image modifiedImage;
+                if (frameType == "normal") {
+                    modifiedImage = NormalFrame(image, frameThickness, frameColor);
+                    modifiedImage.saveImage("normal_frame.jpg");
+                }
+                else if (frameType == "fancy") {
+                    modifiedImage = FancyFrame(image, frameThickness, frameColor);
+                    modifiedImage.saveImage("fancy_frame.jpg");
+                }
+                (image = modifiedImage);
+                Save(image);
+            }
+            else if (choice == "9") {
+                Infrared(image);
+                Save(image);
+            }
+            else if (choice == "10") {
+                Rotate(image);
+                Save(image);
+            }
+            else if (choice == "11") {
 
+                Resize(image);
+
+
+            }
+            else if (choice == "12") {
+                //allow the user to enter the blur level
+                int blurLevel;
+                while (true) {
+                    cout << "Enter the blur level (1 for light, 2 for medium, 3 for extreme): ";
+                    cin >> blurLevel;
+
+                    if (blurLevel == 1 || blurLevel == 2 || blurLevel == 3) {
+                        break;
+                    }
+                    else {
+                        cout << "Invalid blur level, please enter either 1, 2, or 3: ";
+                        cin.clear();
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    }
+                }
+
+                int blurRadius;
+                if (blurLevel == 1) {
+                    blurRadius = 8;
+                }
+                else if (blurLevel == 2) {
+                    blurRadius = 30;
+                }
+                else if (blurLevel == 3) {
+                    blurRadius = 57;
+                }
+                Image blurredImage = blurImage(image, blurRadius);
+                (image = blurredImage);
+                Save(image);
+
+            }
+            else if (choice == "13") {
+                sunlight(image);
+                Save(image);
+            }
+            else if (choice == "14") {
+                Merge(image);
+            }
+            else if (choice == "15") {
+                Crop(image);
+
+            }
         }
-        else if(choice =="13"){
-            sunlight(image); 
-        } 
-
-        else if (choice == "16")
+        else {
             exit(0);
-            
+        }
 
+}
 
-        cout << "Pls enter image name to store new image\n";
-        cout << "and specify extension .jpg, .bmp, .png, .tga: ";
-        string newFilename = ValidName();
-        image.saveImage(newFilename);
-        system(newFilename.c_str());
-        
-    }
- return 0;
 }
